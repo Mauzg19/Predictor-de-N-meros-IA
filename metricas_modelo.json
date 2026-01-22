@@ -1,0 +1,9 @@
+{
+    "exactitud_entrenamiento": 10.714285714285714,
+    "exactitud_validacion": 20.0,
+    "rmse_entrenamiento": 2.5424672629317535,
+    "rmse_validacion": 2.5959488862899693,
+    "mae_entrenamiento": 2.1511085288865224,
+    "mae_validacion": 2.0387189547220865,
+    "epochs_entrenados": 100
+}

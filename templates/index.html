@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Predicción de Números IA</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.3s;
+        }
+        
+        body.dark-mode {
+            background: #1a1a2e;
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: slideDown 0.6s ease-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            flex: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .theme-toggle {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: var(--primary);
+        }
+        
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        body.dark-mode .card {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 10px;
+        }
+        
+        body.dark-mode .card h2 {
+            color: #5dade2;
+        }
+        
+        .prediccion-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            letter-spacing: 10px;
+            animation: pulse 2s infinite;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .confianza-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .confianza-label {
+            min-width: 120px;
+            font-weight: 600;
+        }
+        
+        .confianza-progreso {
+            flex: 1;
+            height: 30px;
+            background: #eee;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        body.dark-mode .confianza-progreso {
+            background: #445566;
+        }
+        
+        .confianza-valor {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--warning));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: width 0.3s;
+        }
+        
+        .estadisticas {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            text-align: center;
+        }
+        
+        body.dark-mode .stat-item {
+            background: #3a4f63;
+            border-left-color: #5dade2;
+        }
+        
+        .stat-item label {
+            display: block;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        body.dark-mode .stat-item label {
+            color: #aaa;
+        }
+        
+        .stat-item .value {
+            font-size: 1.5em;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        thead {
+            background: var(--primary);
+            color: white;
+        }
+        
+        body.dark-mode thead {
+            background: #0f3460;
+        }
+        
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        body.dark-mode td {
+            border-bottom-color: #445566;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        body.dark-mode tr:hover {
+            background: #3a4f63;
+        }
+        
+        .progreso {
+            width: 100%;
+            height: 20px;
+            background: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        body.dark-mode .progreso {
+            background: #445566;
+        }
+        
+        .progreso-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        
+        .historial-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-left: 4px solid var(--success);
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        body.dark-mode .historial-item {
+            background: #3a4f63;
+            border-left-color: #5dade2;
+        }
+        
+        .boton {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+            width: 100%;
+        }
+        
+        .boton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .boton:active {
+            transform: translateY(0);
+        }
+        
+        .boton.secundario {
+            background: #95a5a6;
+            margin: 0 5px 0 0;
+            width: auto;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+            padding: 20px;
+        }
+        
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .estadisticas {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            header {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            header h1 {
+                font-size: 2em;
+            }
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            }
+            50% {
+                box-shadow: 0 8px 35px rgba(102, 126, 234, 0.5);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔮 Predictor de Números IA</h1>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙 Tema</button>
+        </header>
+        
+        <!-- PESTAÑAS -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="mostrarTab('inicio')">🏠 Inicio</button>
+            <button class="tab-btn" onclick="mostrarTab('analisis')">📊 Análisis</button>
+            <button class="tab-btn" onclick="mostrarTab('metricas')">📈 Métricas</button>
+            <button class="tab-btn" onclick="mostrarTab('historial')">📜 Historial</button>
+        </div>
+        
+        <!-- TAB 1: INICIO -->
+        <div id="inicio" class="tab-content active">
+            <div class="content">
+                <!-- PREDICCIÓN -->
+                <div class="card">
+                    <h2>🎰 Predicción LSTM</h2>
+                    <p style="margin-bottom: 15px;">Próximos 4 números predichos por el modelo:</p>
+                    <div class="prediccion-box">{{ prediccion }}</div>
+                    
+                    <div class="confianza-bar">
+                        <span class="confianza-label">Confianza:</span>
+                        <div class="confianza-progreso">
+                            <div class="confianza-valor" id="confianza-bar" style="width: 75%;">75%</div>
+                        </div>
+                    </div>
+                    
+                    <button class="boton" onclick="actualizarPrediccion()">🔄 Actualizar Predicción</button>
+                </div>
+                
+                <!-- ESTADÍSTICAS GENERALES -->
+                <div class="card">
+                    <h2>📈 Estadísticas Generales</h2>
+                    <div class="estadisticas">
+                        <div class="stat-item">
+                            <label>Media</label>
+                            <div class="value">{{ analisis.estadisticas.media }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Mediana</label>
+                            <div class="value">{{ analisis.estadisticas.mediana }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Desv. Est.</label>
+                            <div class="value">{{ analisis.estadisticas.desv_estandar }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Mínimo</label>
+                            <div class="value">{{ analisis.estadisticas.minimo }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Máximo</label>
+                            <div class="value">{{ analisis.estadisticas.maximo }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Rango</label>
+                            <div class="value">{{ analisis.estadisticas.rango }}</div>
+                        </div>
+                    </div>
+                    <p style="color: #666; margin-top: 15px; text-align: center; font-size: 0.9em;">
+                        Total de dígitos analizados: <strong>{{ analisis.estadisticas.total_digitos }}</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TAB 2: ANÁLISIS -->
+        <div id="analisis" class="tab-content">
+            <div class="content">
+                <!-- FRECUENCIA DE DÍGITOS -->
+                <div class="card">
+                    <h2>🔢 Frecuencia de Dígitos</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Dígito</th>
+                                <th>Cantidad</th>
+                                <th>Porcentaje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in analisis.frecuencia %}
+                            <tr>
+                                <td><strong>{{ item.digito }}</strong></td>
+                                <td>{{ item.cantidad }}</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <span>{{ item.porcentaje }}%</span>
+                                        <div class="progreso" style="flex: 1;">
+                                            <div class="progreso-bar" style="width: {{ (item.porcentaje * 10)|int }}px;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- TRANSICIONES -->
+                <div class="card">
+                    <h2>⚡ Top Transiciones (Patrones)</h2>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Transición</th>
+                                    <th>Cantidad</th>
+                                    <th>Porcentaje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in analisis.transiciones %}
+                                <tr>
+                                    <td><strong>{{ item.transicion }}</strong></td>
+                                    <td>{{ item.cantidad }}</td>
+                                    <td>{{ item.porcentaje }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TAB 3: MÉTRICAS -->
+        <div id="metricas" class="tab-content">
+            <div class="content" style="grid-template-columns: 1fr;">
+                <div class="card">
+                    <h2>📊 Métricas del Modelo</h2>
+                    <div class="grid-2">
+                        <div>
+                            <h3 style="margin-top: 0;">Precisión</h3>
+                            <div id="metricas-precision" style="font-size: 1.2em; color: var(--success);">Cargando...</div>
+                            
+                            <h3 style="margin-top: 20px;">Validación</h3>
+                            <div id="metricas-validacion" style="font-size: 1.2em; color: var(--primary);">Cargando...</div>
+                        </div>
+                        <div>
+                            <div class="chart-container">
+                                <canvas id="metricas-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2>🎯 Estadísticas de Base de Datos</h2>
+                    <div class="estadisticas" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="stat-item">
+                            <label>Total de Predicciones</label>
+                            <div class="value" id="stat-predicciones">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Tasa de Acierto</label>
+                            <div class="value" id="stat-acierto">0%</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Secuencias Acertadas</label>
+                            <div class="value" id="stat-secuencias">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TAB 4: HISTORIAL -->
+        <div id="historial" class="tab-content">
+            <div class="card">
+                <h2>📜 Historial de Predicciones</h2>
+                <div id="historial-container" style="max-height: 600px; overflow-y: auto;">
+                    <p>Cargando historial...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🚀 Predicción de Números IA | Versión 2.0 | Sistema Activo</p>
+        </div>
+    </div>
+    
+    <script>
+        // ============ CONTROL DE PESTAÑAS ============
+        function mostrarTab(tab) {
+            // Ocultar todos
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            // Mostrar seleccionado
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Cargar datos si es necesario
+            if (tab === 'metricas') cargarMetricas();
+            if (tab === 'historial') cargarHistorial();
+        }
+        
+        // ============ TEMA OSCURO/CLARO ============
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        }
+        
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+        
+        // ============ ACTUALIZAR PREDICCIÓN ============
+        function actualizarPrediccion() {
+            const box = document.querySelector('.prediccion-box');
+            box.style.opacity = '0.5';
+            
+            fetch('/api/prediccion')
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    document.querySelector('.prediccion-box').textContent = data.prediccion;
+                    
+                    // Actualizar confianza
+                    const confianza = data.confianza || 75;
+                    document.getElementById('confianza-bar').style.width = confianza + '%';
+                    document.getElementById('confianza-bar').textContent = confianza + '%';
+                    
+                    box.style.opacity = '1';
+                    console.log('✓ Predicción actualizada:', data.prediccion);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    box.style.opacity = '1';
+                    alert('Error al actualizar predicción');
+                });
+        }
+        
+        // ============ CARGAR MÉTRICAS ============
+        function cargarMetricas() {
+            fetch('/api/metricas')
+                .then(r => r.json())
+                .then(data => {
+                    const precision = data.metricas_entrenamiento || {};
+                    document.getElementById('metricas-precision').innerHTML = `
+                        Exactitud: ${precision.exactitud_validacion || 'N/A'}%<br>
+                        RMSE: ${precision.rmse_validacion || 'N/A'}
+                    `;
+                    document.getElementById('metricas-validacion').innerHTML = `
+                        MAE: ${precision.mae_validacion || 'N/A'}<br>
+                        Confianza: ${data.confianza_general || 'N/A'}%
+                    `;
+                })
+                .catch(e => console.error('Error cargando métricas:', e));
+            
+            fetch('/api/estadisticas-bd')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('stat-predicciones').textContent = data.total_predicciones || 0;
+                    document.getElementById('stat-acierto').textContent = (data.tasa_promedio_acierto || 0) + '%';
+                    document.getElementById('stat-secuencias').textContent = data.secuencias_acertadas || 0;
+                })
+                .catch(e => console.error('Error:', e));
+        }
+        
+        // ============ CARGAR HISTORIAL ============
+        function cargarHistorial() {
+            fetch('/api/historial?limite=15')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('historial-container');
+                    if (!data.predicciones || data.predicciones.length === 0) {
+                        container.innerHTML = '<p>No hay predicciones registradas</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = data.predicciones.map(p => `
+                        <div class="historial-item">
+                            <div>
+                                <strong>${p.numeros}</strong><br>
+                                <small>${p.fecha}</small>
+                            </div>
+                            <div style="text-align: right;">
+                                <strong>${p.confianza || 'N/A'}%</strong>
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(e => console.error('Error:', e));
+        }
+        
+        // Cargar datos iniciales
+        window.addEventListener('load', () => {
+            cargarMetricas();
+        });
+    </script>
+</body>
+</html>
